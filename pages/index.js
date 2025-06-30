@@ -22,12 +22,19 @@ const telecomPlans = {
   }
 };
 
+const internetPlans = {
+  "100M": 16500,
+  "500M": 22000,
+  "1G": 27500
+};
+
 function IPTVCalculator() {
   const [telco, setTelco] = useState('SK');
   const [plan, setPlan] = useState('Economy');
   const [tvCount, setTvCount] = useState(1);
   const [usedMonths, setUsedMonths] = useState(0);
   const [contractYears, setContractYears] = useState(3);
+  const [internetSpeed, setInternetSpeed] = useState("500M");
 
   const handleTelcoChange = (e) => {
     const v = e.target.value;
@@ -38,15 +45,17 @@ function IPTVCalculator() {
   const selectedPlan = telecomPlans[telco][plan];
   const setTopBoxPrice = telecomPlans[telco].setTopBoxPrice;
   const addCost = tvCount > 1 ? setTopBoxPrice * (tvCount - 1) : 0;
-  const totalPrice = selectedPlan.price + addCost;
+  const internetFee = internetPlans[internetSpeed];
+  const totalPrice = selectedPlan.price + addCost + internetFee;
 
   const contractMonths = contractYears * 12;
   const discount = selectedPlan.noContractPrice - selectedPlan.price;
   const penalty = Math.round(discount * usedMonths * 1.2);
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '500px', margin: '0 auto' }}>
+    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
       <h1>📺 IPTV 요금 & 위약금 계산기</h1>
+
       <div>
         <label>통신사: </label>
         <select value={telco} onChange={handleTelcoChange}>
@@ -75,6 +84,15 @@ function IPTVCalculator() {
           {[1, 2, 3].map((n) => (
             <option key={n} value={n}>{n}대</option>
           ))}
+        </select>
+      </div>
+
+      <div>
+        <label>인터넷 속도: </label>
+        <select value={internetSpeed} onChange={(e) => setInternetSpeed(e.target.value)}>
+          <option value="100M">100M (16,500원)</option>
+          <option value="500M">500M (22,000원)</option>
+          <option value="1G">1G (27,500원)</option>
         </select>
       </div>
 
