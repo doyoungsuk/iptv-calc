@@ -1,123 +1,120 @@
 import { useState } from 'react';
 
-const telecomPlans = {
-  SK: {
-    Economy: { channels: 183, price: 8800, noContractPrice: 11000 },
-    Standard: { channels: 236, price: 12100, noContractPrice: 16500 },
-    All: { channels: 257, price: 15400, noContractPrice: 19800 },
-    Pop230: { channels: 231, price: 17600, noContractPrice: 20900 },
-    setTopBoxPrice: 5500
+const plans = {
+  LG: {
+    name: 'LG U+',
+    internet: {
+      '100M': 20000,
+      '500M': 25000,
+      '1G': 30000
+    },
+    tv: {
+      '베이직': { price: 15000, channels: 213 },
+      '고급형': { price: 16500, channels: 234 },
+      '프리미엄': { price: 20900, channels: 255 },
+      '프리미엄+디즈니': { price: 26950, channels: 260 }
+    },
+    setTopBox: 0,
+    wifi: 0
   },
   KT: {
-    Lite: { channels: 200, price: 45100, noContractPrice: 50600 },
-    Essence: { channels: 220, price: 48400, noContractPrice: 53900 },
-    Kids: { channels: 250, price: 52800, noContractPrice: 58300 },
-    setTopBoxPrice: 4400
+    name: 'KT',
+    internet: {
+      '100M': 22000,
+      '500M': 22000,
+      '1G': 27500
+    },
+    tv: {
+      '베이직': { price: 14740, channels: 239 },
+      '에센스': { price: 20240, channels: 269 }
+    },
+    setTopBox: 3300,
+    wifi: 0
   },
-  LG: {
-    Basic: { channels: 211, price: 38500, noContractPrice: 44000 },
-    Premium: { channels: 252, price: 42900, noContractPrice: 48400 },
-    PremiumDisney: { channels: 257, price: 51000, noContractPrice: 56500 },
-    setTopBoxPrice: 5500
+  SK: {
+    name: 'SK Btv',
+    internet: {
+      '100M': 22000,
+      '500M': 22000,
+      '1G': 27500
+    },
+    tv: {
+      '베이직': { price: 12100, channels: 236 },
+      '프라임': { price: 15400, channels: 257 }
+    },
+    setTopBox: 3300,
+    wifi: 0
   }
 };
 
-const internetPlans = {
-  "100M": 16500,
-  "500M": 22000,
-  "1G": 27500
-};
-
-function IPTVCalculator() {
-  const [telco, setTelco] = useState('SK');
-  const [plan, setPlan] = useState('Economy');
+export default function IPTVCalculator() {
+  const [carrier, setCarrier] = useState('LG');
+  const [internetSpeed, setInternetSpeed] = useState('100M');
+  const [tvPlan, setTvPlan] = useState('베이직');
   const [tvCount, setTvCount] = useState(1);
-  const [usedMonths, setUsedMonths] = useState(0);
-  const [contractYears, setContractYears] = useState(3);
-  const [internetSpeed, setInternetSpeed] = useState("500M");
 
-  const handleTelcoChange = (e) => {
-    const v = e.target.value;
-    setTelco(v);
-    setPlan(Object.keys(telecomPlans[v]).find((k) => k !== 'setTopBoxPrice'));
-  };
+  const selectedPlan = plans[carrier];
+  const baseInternet = selectedPlan.internet[internetSpeed] || 0;
+  const baseTV = selectedPlan.tv[tvPlan]?.price || 0;
+  const extraSetTop = selectedPlan.setTopBox * (tvCount > 1 ? tvCount - 1 : 0);
+  const wifiFee = selectedPlan.wifi;
 
-  const selectedPlan = telecomPlans[telco][plan];
-  const setTopBoxPrice = telecomPlans[telco].setTopBoxPrice;
-  const addCost = tvCount > 1 ? setTopBoxPrice * (tvCount - 1) : 0;
-  const internetFee = internetPlans[internetSpeed];
-  const totalPrice = selectedPlan.price + addCost + internetFee;
-
-  const contractMonths = contractYears * 12;
-  const discount = selectedPlan.noContractPrice - selectedPlan.price;
-  const penalty = Math.round(discount * usedMonths * 1.2);
+  const total = baseInternet + baseTV + extraSetTop + wifiFee;
+  const vatIncluded = Math.round(total * 1.1);
 
   return (
-    <div style={{ padding: '2rem', maxWidth: '800px', margin: '0 auto' }}>
-      <h1>📺 IPTV 요금 & 위약금 계산기</h1>
+    <div style={{ maxWidth: 700, margin: 'auto', padding: 20 }}>
+      <h1>📺 통신사 요금 계산기 (대리점 기준)</h1>
 
-      <div>
-        <label>통신사: </label>
-        <select value={telco} onChange={handleTelcoChange}>
-          <option value="SK">SK Btv</option>
-          <option value="KT">KT Genie</option>
-          <option value="LG">LG U+</option>
-        </select>
-      </div>
-
-      <div>
-        <label>요금제: </label>
-        <select value={plan} onChange={(e) => setPlan(e.target.value)}>
-          {Object.entries(telecomPlans[telco])
-            .filter(([k]) => k !== 'setTopBoxPrice')
-            .map(([k, d]) => (
-              <option key={k} value={k}>
-                {k} ({d.channels}채널 / {d.price.toLocaleString()}원)
-              </option>
-            ))}
-        </select>
-      </div>
-
-      <div>
-        <label>TV 대수: </label>
-        <select value={tvCount} onChange={(e) => setTvCount(Number(e.target.value))}>
-          {[1, 2, 3].map((n) => (
-            <option key={n} value={n}>{n}대</option>
+      <label>
+        통신사 선택:
+        <select value={carrier} onChange={(e) => {
+          setCarrier(e.target.value);
+          const defaultTV = Object.keys(plans[e.target.value].tv)[0];
+          setTvPlan(defaultTV);
+        }}>
+          {Object.keys(plans).map((key) => (
+            <option key={key} value={key}>{plans[key].name}</option>
           ))}
         </select>
-      </div>
+      </label>
 
-      <div>
-        <label>인터넷 속도: </label>
+      <br />
+      <label>
+        인터넷 속도:
         <select value={internetSpeed} onChange={(e) => setInternetSpeed(e.target.value)}>
-          <option value="100M">100M (16,500원)</option>
-          <option value="500M">500M (22,000원)</option>
-          <option value="1G">1G (27,500원)</option>
-        </select>
-      </div>
-
-      <div>
-        <label>사용 개월 수: </label>
-        <input type="number" value={usedMonths} onChange={(e) => setUsedMonths(Number(e.target.value))} />
-      </div>
-
-      <div>
-        <label>약정 기간: </label>
-        <select value={contractYears} onChange={(e) => setContractYears(Number(e.target.value))}>
-          {[1, 2, 3].map((n) => (
-            <option key={n} value={n}>{n}년</option>
+          {Object.keys(plans[carrier].internet).map((speed) => (
+            <option key={speed} value={speed}>{speed}</option>
           ))}
         </select>
-      </div>
+      </label>
+
+      <br />
+      <label>
+        TV 요금제:
+        <select value={tvPlan} onChange={(e) => setTvPlan(e.target.value)}>
+          {Object.keys(plans[carrier].tv).map((plan) => (
+            <option key={plan} value={plan}>{plan} ({plans[carrier].tv[plan].channels}채널)</option>
+          ))}
+        </select>
+      </label>
+
+      <br />
+      <label>
+        TV 대수:
+        <input
+          type="number"
+          value={tvCount}
+          min={1}
+          onChange={(e) => setTvCount(parseInt(e.target.value))}
+        />
+      </label>
 
       <hr />
 
-      <div>
-        <p>✅ 총 월 요금: <strong>{totalPrice.toLocaleString()}원</strong></p>
-        <p>❗ 사용 {usedMonths}개월 후 예상 위약금: <strong>{penalty.toLocaleString()}원</strong></p>
-      </div>
+      <h2>월 예상 요금: {total.toLocaleString()}원</h2>
+      <p>(부가세 포함: {vatIncluded.toLocaleString()}원)</p>
+      <p>(인터넷 + TV + 추가 셋톱박스 + 와이파이 임대료 포함)</p>
     </div>
   );
 }
-
-export default IPTVCalculator;
